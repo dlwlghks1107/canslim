@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAN SLIM 데일리 스크리너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#101d38; --navy2:#182a4e; --paper:#f6f7f3; --card:#ffffff;
+  --ink:#141a24; --sub:#5c6675; --gold:#c9a227; --gold-soft:#f3e8c8;
+  --up:#0a7a45; --up-soft:#e2f2e9; --down:#c0392b; --down-soft:#f9e6e2;
+  --line:#e2e4dc; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);
+  font:15px/1.6 'IBM Plex Sans KR',system-ui,sans-serif}
+button{font:inherit;cursor:pointer;border:none;background:none}
+
+/* ── 헤더 ── */
+header{background:var(--navy);color:#fff;padding:26px 20px 22px}
+.wrap{max-width:920px;margin:0 auto}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:24px;font-weight:700;letter-spacing:-.5px}
+.letters{font-family:var(--mono);font-weight:700;color:var(--gold);
+  font-size:15px;letter-spacing:.35em}
+.head-row{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;margin-top:14px;flex-wrap:wrap}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:12px;padding:5px 12px;border-radius:99px;
+  background:rgba(255,255,255,.12)}
+.badge.up{background:var(--up)} .badge.down{background:var(--down)}
+select#dateSel{background:var(--navy2);color:#fff;border:1px solid
+  rgba(255,255,255,.25);border-radius:8px;padding:6px 10px;font:inherit;
+  font-size:13px}
+
+/* ── 툴바 ── */
+.toolbar{max-width:920px;margin:18px auto 0;padding:0 16px;
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;background:#eceee6;border-radius:10px;padding:3px}
+.tabs button{padding:7px 16px;border-radius:8px;font-size:13.5px;
+  color:var(--sub);font-weight:500}
+.tabs button.on{background:var(--navy);color:#fff}
+#q{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);
+  border-radius:10px;font:inherit;font-size:14px;background:var(--card)}
+#sortSel{padding:8px 10px;border:1px solid var(--line);border-radius:10px;
+  font:inherit;font-size:13px;background:var(--card);color:var(--ink)}
+
+/* ── 리스트 ── */
+main{max-width:920px;margin:14px auto 60px;padding:0 16px}
+.count{font-size:13px;color:var(--sub);margin:6px 2px 10px}
+.stock{background:var(--card);border:1px solid var(--line);
+  border-radius:14px;margin-bottom:10px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:14px 16px;
+  width:100%;text-align:left}
+.flag{font-size:18px}
+.nm{flex:1;min-width:0}
+.nm b{font-size:15.5px}
+.nm .tk{font-family:var(--mono);font-size:12px;color:var(--sub);
+  margin-left:6px}
+.px{font-family:var(--mono);font-weight:700;font-size:15px;
+  text-align:right;white-space:nowrap}
+.rs-pill{font-family:var(--mono);font-weight:700;font-size:13px;
+  background:var(--gold-soft);color:#7a5e0e;border-radius:8px;
+  padding:4px 9px;white-space:nowrap}
+.chev{color:var(--sub);transition:transform .2s}
+.stock.open .chev{transform:rotate(180deg)}
+
+/* ── 시그니처: CANSLIM 체크리스트 ── */
+.detail{display:none;border-top:1px dashed var(--line);
+  padding:14px 16px 16px;background:#fbfcf8}
+.stock.open .detail{display:block}
+.checks{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.chk{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:10px 6px;text-align:center}
+.chk .lt{font-family:var(--mono);font-weight:700;font-size:17px;
+  color:var(--up)}
+.chk.na .lt{color:#b8bdc6}
+.chk .lb{font-size:10.5px;color:var(--sub);margin-top:2px}
+.chk .vl{font-family:var(--mono);font-size:12px;font-weight:700;
+  margin-top:4px}
+.chk.na .vl{color:#b8bdc6}
+.empty{background:var(--card);border:1px dashed var(--line);
+  border-radius:14px;padding:44px 20px;text-align:center;color:var(--sub)}
+.notice{margin-top:34px;font-size:12.5px;color:var(--sub);
+  border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+@media(max-width:600px){
+  .checks{grid-template-columns:repeat(4,1fr)}
+  .px{font-size:13.5px}
+  .brand h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>데일리 스크리너</h1>
+      <span class="letters">C·A·N·S·L·I·M</span>
+    </div>
+    <div class="head-row">
+      <div class="badges" id="badges"></div>
+      <select id="dateSel" title="날짜 선택"></select>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tabs" id="tabs">
+    <button data-m="all" class="on">전체</button>
+    <button data-m="US">🇺🇸 미국</button>
+    <button data-m="KR">🇰🇷 한국</button>
+  </div>
+  <input id="q" type="search" placeholder="종목명·티커 검색">
+  <select id="sortSel">
+    <option value="rs">상대강도(RS)순</option>
+    <option value="c_growth">EPS성장순</option>
+    <option value="pct_of_high">신고가근접순</option>
+  </select>
+</div>
+
+<main>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+  <p class="notice">
+    <b>기준</b> — C: 분기 EPS 성장 ≥25% · A: 연간 EPS 성장 ≥25% ·
+    N: 52주 고가의 85% 이상 · S: 10일/50일 거래량 ≥1.0 ·
+    L: 12개월 상대강도 상위 20% · I: 기관 보유 ≥20%(미국) ·
+    M: 지수가 50일선 위.<br>
+    미국은 yfinance, 한국 실적은 네이버 증권 기업실적분석 기준입니다.
+    본 자료는 투자 참고용이며 특정 종목의 매수·매도 추천이 아닙니다.
+  </p>
+</main>
+
+<script>
+// 미리보기용 샘플 (results.json 로드 실패 시에만 사용)
+const SAMPLE = {
+  date:"2026-07-29", market:{us_uptrend:true, kr_uptrend:false},
+  us:[
+    {market:"US",ticker:"NVDA",name:"NVIDIA Corp",price:182.5,rs:98.2,
+     c_growth:122.4,a_growth:147.0,pct_of_high:96.3,vol_ratio:1.31,inst:66.2},
+    {market:"US",ticker:"AVGO",name:"Broadcom Inc",price:312.4,rs:95.1,
+     c_growth:41.2,a_growth:38.5,pct_of_high:94.8,vol_ratio:1.18,inst:72.4},
+    {market:"US",ticker:"LLY",name:"Eli Lilly",price:934.0,rs:88.7,
+     c_growth:63.0,a_growth:55.1,pct_of_high:91.2,vol_ratio:1.05,inst:82.1}
+  ],
+  kr:[
+    {market:"KR",ticker:"005930",name:"삼성전자",price:88200,rs:91.5,
+     c_growth:58.3,a_growth:44.2,pct_of_high:97.1,vol_ratio:1.12,inst:null},
+    {market:"KR",ticker:"042700",name:"한미반도체",price:131500,rs:96.8,
+     c_growth:210.5,a_growth:180.3,pct_of_high:93.5,vol_ratio:1.44,inst:null}
+  ]
+};
+
+let DATA=null, isDemo=false;
+let state={m:"all", q:"", sort:"rs"};
+
+const $=s=>document.querySelector(s);
+const won=n=>n.toLocaleString("ko-KR")+"원";
+const usd=n=>"$"+n.toLocaleString("en-US");
+
+async function loadJSON(url){
+  const r=await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function init(){
+  try{ DATA=await loadJSON("results.json"); }
+  catch(e){ DATA=SAMPLE; isDemo=true; }
+  try{
+    const dates=await loadJSON("history/manifest.json");
+    const sel=$("#dateSel");
+    sel.innerHTML=dates.map(d=>`<option value="${d}">${d}</option>`).join("");
+    sel.value=DATA.date;
+    sel.onchange=async()=>{
+      try{ DATA=await loadJSON(`history/${sel.value}.json`); render(); }
+      catch(e){}
+    };
+  }catch(e){
+    $("#dateSel").innerHTML=`<option>${DATA.date}</option>`;
+  }
+  render();
+}
+
+function badge(ok,name){
+  if(ok===null||ok===undefined)
+    return `<span class="badge">${name} · 판단불가</span>`;
+  return ok?`<span class="badge up">${name} · 상승추세 🟢</span>`
+           :`<span class="badge down">${name} · 하락추세 — 신규매수 자제</span>`;
+}
+
+function chk(letter,label,value,pass){
+  const na=(value===null||value===undefined);
+  return `<div class="chk ${na?"na":""}">
+    <div class="lt">${na?"–":"✓"} ${letter}</div>
+    <div class="lb">${label}</div>
+    <div class="vl">${na?"자료없음":value}</div></div>`;
+}
+
+function card(s){
+  const isUS=s.market==="US";
+  const mOK=isUS?DATA.market?.us_uptrend:DATA.market?.kr_uptrend;
+  return `<div class="stock">
+    <button class="row" onclick="this.parentElement.classList.toggle('open')">
+      <span class="flag">${isUS?"🇺🇸":"🇰🇷"}</span>
+      <span class="nm"><b>${s.name}</b><span class="tk">${s.ticker}</span></span>
+      <span class="rs-pill">RS ${s.rs}</span>
+      <span class="px">${isUS?usd(s.price):won(s.price)}</span>
+      <span class="chev">▾</span>
+    </button>
+    <div class="detail"><div class="checks">
+      ${chk("C","분기 EPS",s.c_growth!=null?`+${s.c_growth}%`:null,true)}
+      ${chk("A","연간 EPS",s.a_growth!=null?`+${s.a_growth}%`:null,true)}
+      ${chk("N","고가대비",`${s.pct_of_high}%`,true)}
+      ${chk("S","거래량비",s.vol_ratio!=null?`×${s.vol_ratio}`:null,true)}
+      ${chk("L","상대강도",`상위 ${(100-s.rs).toFixed(0)}%`,true)}
+      ${chk("I","기관보유",s.inst!=null?`${s.inst}%`:null,true)}
+      ${chk("M","시장방향",mOK===null||mOK===undefined?null:(mOK?"상승추세":"하락추세"),mOK)}
+    </div></div>
+  </div>`;
+}
+
+function render(){
+  $("#badges").innerHTML =
+    badge(DATA.market?.us_uptrend,"S&P500")+
+    badge(DATA.market?.kr_uptrend,"KOSPI")+
+    (isDemo?`<span class="badge">⚠ 샘플 데이터 (첫 실행 전)</span>`:"");
+
+  let list=[...(DATA.us||[]),...(DATA.kr||[])];
+  if(state.m!=="all") list=list.filter(s=>s.market===state.m);
+  if(state.q){
+    const q=state.q.toLowerCase();
+    list=list.filter(s=>s.name.toLowerCase().includes(q)
+      ||s.ticker.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=>(b[state.sort]??-1)-(a[state.sort]??-1));
+
+  $("#count").textContent =
+    `${DATA.date} 기준 · ${list.length}개 종목이 CAN SLIM 조건을 통과`;
+  $("#list").innerHTML = list.length
+    ? list.map(card).join("")
+    : `<div class="empty">조건을 통과한 종목이 없습니다.<br>
+       오닐: "시장이 조정일 땐 현금도 포지션이다."</div>`;
+}
+
+$("#tabs").onclick=e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  document.querySelectorAll("#tabs button")
+    .forEach(x=>x.classList.toggle("on",x===b));
+  state.m=b.dataset.m; render();
+};
+$("#q").oninput=e=>{state.q=e.target.value.trim(); render();};
+$("#sortSel").onchange=e=>{state.sort=e.target.value; render();};
+
+init();
+</script>
+</body>
+</html>
